@@ -1,9 +1,9 @@
 {
   "manifestVersion": 1,
-  "id": "plugin_template",
-  "name": "Plugin Template",
+  "id": "ai_tools",
+  "name": "AI tools",
   "author": "remnote",
-  "repoUrl": "",
+  "repoUrl": "https://github.com/yoyooyooo/remnote-plugin-word",
   "version": {
     "major": 0,
     "minor": 0,
@@ -12,11 +12,11 @@
   "theme": [],
   "enableOnMobile": false,
   "description": "",
-  "requestNative": false,
+  "requestNative": true,
   "requiredScopes": [
     {
       "type": "All",
-      "level": "Read"
+      "level": "ReadCreateModifyDelete"
     }
   ]
 }
