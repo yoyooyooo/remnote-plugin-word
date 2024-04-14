@@ -77,3 +77,9 @@ export const findRem = async (
     return false;
   }
 };
+
+export const getRemChildrenText = async function (rem: Rem, plugin: RNPlugin) {
+  return await Promise.all(
+    (await rem?.getChildrenRem()).map(async (a) => await plugin.richText.toString(a.text!)) || []
+  );
+};

@@ -1,22 +1,5 @@
-import {
-  renderWidget,
-  usePlugin,
-  useTracker,
-  useRunAsync,
-  WidgetLocation,
-} from '@remnote/plugin-sdk';
-import React from 'react';
-import { DigestLongText } from '../components/ToolButtons/DigestLongText';
-import { QueryWord } from '../components/ToolButtons/QueryWord';
-import { OptText } from '../components/ToolButtons/OptText';
-import { SubmitButton } from '../components/SubmitButton';
-import { PromptGenerator } from '../components/ToolButtons/PromptGenerator';
-import {
-  AI_ENABLED_POWERUP_CODE,
-  aiSlots,
-  AI_ACTION_POWERUP_CODE,
-  completePrompt,
-} from '../plugins/ai';
+import { WidgetLocation, renderWidget, usePlugin, useRunAsync } from '@remnote/plugin-sdk';
+import { AI_ACTION_POWERUP_CODE, AI_ENABLED_POWERUP_CODE, getAiStatusRem } from '../plugins/ai';
 import { findAsync } from '../utils/common';
 
 export const SampleWidget = () => {
@@ -26,13 +9,10 @@ export const SampleWidget = () => {
     () => plugin.widget.getWidgetContext<WidgetLocation.RightSideOfEditor>(),
     []
   );
-  // const rem = useRunAsync(async () => await plugin.rem.createRem(), []);
-
-  //   let name = useTracker((rplugin) => {});
 
   return (
     <div
-      className="bg-green-10 rounded-lg cursor-pointer p-1"
+      className="bg-green-10 hover:bg-green-20 rounded-lg cursor-pointer w-6 h-6 flex justify-center items-center transition-colors shadow-lg"
       onClick={async () => {
         const rem = await plugin.rem.findOne(widgetContext?.remId);
         if (!rem) return;
@@ -40,9 +20,10 @@ export const SampleWidget = () => {
           (await rem.getTagRems()) || [],
           async (a) => (await a.isPowerupEnum()) && a.text?.[0] === 'editingSelection'
         );
-        console.log({ rem, editingSelectionRem, tags: await rem.getTagRems() });
         const parentRem = (await rem.getParentRem())!;
+        parentRem.removePowerup(AI_ENABLED_POWERUP_CODE); // turn off ai
 
+        // selection
         if (editingSelectionRem) {
           const replacedRem = await plugin.richText.replaceAllRichText(
             parentRem.text!,
@@ -53,16 +34,31 @@ export const SampleWidget = () => {
           rem.remove();
         } else {
           const childRems = await parentRem!.getChildrenRem();
+          const optionRem = await getAiStatusRem({ plugin, status: 'option' })!;
+          // whole rem
           rem.text && parentRem?.setText(rem.text);
           childRems.forEach(async (a) => {
             if (await a.hasPowerup(AI_ACTION_POWERUP_CODE)) {
               a.remove();
             }
+            const tags = await a.getTagRems();
+            const hasOptionTag = tags.some((a) => a._id === optionRem?._id);
+            if (hasOptionTag) a.remove();
           });
         }
       }}
     >
-      √
+      <svg viewBox="0 0 24 24" width="24" height="24">
+        <path
+          className="transition-colors hover:stroke-green-80"
+          fill="none"
+          stroke="#059669"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M6 12 l4 4 L18 8"
+        />
+      </svg>
     </div>
   );
 };

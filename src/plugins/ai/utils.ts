@@ -1,5 +1,18 @@
-import { renderWidget, usePlugin, RNPlugin, Rem, RichTextInterface } from '@remnote/plugin-sdk';
-import { AI_ENABLED_POWERUP_CODE, aiSlots, AI_ACTION_POWERUP_CODE } from './constants';
+import {
+  renderWidget,
+  usePlugin,
+  RNPlugin,
+  Rem,
+  RichTextInterface,
+  filterAsync,
+} from '@remnote/plugin-sdk';
+import { differenceBy, orderBy, sortBy } from 'lodash-es';
+import {
+  AI_ENABLED_POWERUP_CODE,
+  aiSlots,
+  AI_ACTION_POWERUP_CODE,
+  AI_PROMPT_POWERUP_CODE,
+} from './constants';
 import { completePrompt } from './prompts';
 import { queryAi } from '../../utils/openai';
 
@@ -83,6 +96,27 @@ export const enableAI = async ({
   newRem?.addPowerup(AI_ACTION_POWERUP_CODE);
   const editingRem = await getAiStatusRem({ plugin, status: 'option' });
   editingRem && newRem?.addTag(editingRem);
-  newRem?.setText([res]);
+  newRem?.setText(await plugin.richText.parseFromMarkdown(res));
+  // newRem?.setText([res]);
   newRem?.setParent(rem, -1);
+};
+
+export const getPromptRows = async (plugin: RNPlugin) => {
+  const tableRem = await plugin.powerup.getPowerupByCode(AI_PROMPT_POWERUP_CODE);
+  const rows = (await tableRem?.taggedRem()) || [];
+  const res = await Promise.all(
+    rows.map(async (a) => ({
+      name: await plugin.richText.toString(a.text ?? []),
+      scene: await a.getPowerupProperty(AI_PROMPT_POWERUP_CODE, 'scene'),
+      prompt: await a.getPowerupProperty(AI_PROMPT_POWERUP_CODE, 'prompt'),
+      enabled: await a.getPowerupProperty(AI_PROMPT_POWERUP_CODE, 'enabled'),
+      order: +(await a.getPowerupProperty(AI_PROMPT_POWERUP_CODE, 'order')) || 0,
+    }))
+  );
+  return orderBy(res, 'order');
+};
+
+export const getEnabledPromptRows = async (plugin: RNPlugin) => {
+  const rows = await getPromptRows(plugin);
+  return rows.filter((a) => a.enabled === 'Yes');
 };

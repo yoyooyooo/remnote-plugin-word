@@ -12,6 +12,7 @@ export const DigestLongText = () => {
         const text = await plugin.editor.getSelectedText();
         if (!text?.richText) return;
         const focusRem = await plugin.focus.getFocusedRem();
+        if (!focusRem) return;
         const [err, res] = await queryAi({
           prompt: digestLongText(await plugin.richText.toString(text.richText)),
           autoExtractCode: true,

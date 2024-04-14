@@ -11,14 +11,14 @@ export async function queryAi({
   prompt,
   model,
   autoExtractCode,
-  debug = true,
+  debug = false,
 }: {
   prompt: string;
   model?: string;
   autoExtractCode?: boolean;
   debug?: boolean;
 }): Promise<[any, string]> {
-  console.log(`[queryAi]prompt: `, prompt);
+  console.log(`debug[queryAi] prompt: `, prompt);
   if (debug) {
     await delay(1000);
     return [null, 'debug content'];
@@ -37,7 +37,8 @@ export async function queryAi({
             role: 'user',
             content: [
               prompt,
-              '请生成一个简洁明了的文本，内容直接相关于用户的具体请求，不包含任何额外的说明或格式化文本。确保输出结果仅包括所需的最终文本内容',
+              // '请生成一个简洁明了的文本，内容直接相关于用户的具体请求，不包含任何额外的说明或格式化文本。确保输出结果仅包括所需的最终文本内容',
+              '不添加任何额外说明，不要输出在代码块中',
             ].join('\n'),
           },
         ],

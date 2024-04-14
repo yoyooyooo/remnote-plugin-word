@@ -16,7 +16,7 @@ export const SubmitButton = ({
 
   return (
     <div
-      className={`flex items-center cursor-pointer  justify-center h-max  ${
+      className={`flex items-center cursor-pointer text-sm justify-center ${
         className ?? 'bg-pink-20 hover:bg-pink-50  text-white rounded-lg p-2'
       }`}
       onClick={async (e) => {
@@ -24,6 +24,7 @@ export const SubmitButton = ({
         try {
           await onSubmit();
         } catch (error) {
+          console.log(error);
           plugin.app.toast('执行出错');
         } finally {
           setLoading(false);

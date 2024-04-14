@@ -1,11 +1,17 @@
-import { renderWidget, usePlugin, useRunAsync, WidgetLocation } from '@remnote/plugin-sdk';
-import React from 'react';
-import { DigestLongText } from '../components/ToolButtons/DigestLongText';
-import { QueryWord } from '../components/ToolButtons/QueryWord';
-import { OptText } from '../components/ToolButtons/OptText';
+import {
+  renderWidget,
+  usePlugin,
+  useRunAsync,
+  useTracker,
+  WidgetLocation,
+} from '@remnote/plugin-sdk';
 import { SubmitButton } from '../components/SubmitButton';
+import { AI_ENABLED_POWERUP_CODE, getEnabledPromptRows } from '../plugins/ai';
+import { DigestLongText } from '../components/ToolButtons/DigestLongText';
+import { OptText } from '../components/ToolButtons/OptText';
 import { PromptGenerator } from '../components/ToolButtons/PromptGenerator';
-import { AI_ENABLED_POWERUP_CODE, replaceSelection, getAiStatusRem } from '../plugins/ai';
+import { QueryWord } from '../components/ToolButtons/QueryWord';
+import { getAiStatusRem, replaceSelection, enableAI } from '../plugins/ai';
 
 export const SampleWidget = () => {
   const plugin = usePlugin();
@@ -13,16 +19,33 @@ export const SampleWidget = () => {
     () => plugin.widget.getWidgetContext<WidgetLocation.UnderRemEditor>(),
     []
   );
-  const widgetRem = useRunAsync(() => plugin.rem.findOne(widgetContext?.remId), [widgetContext]);
-
-  // let name = useTracker(() => plugin.settings.getSetting<string>('name'));
+  const prompts = useTracker(async (plugin) => {
+    return await getEnabledPromptRows(plugin);
+  }, []);
 
   return (
-    <div className="flex flex-wrap gap-4 h-[100%] p-4">
+    <div className="flex flex-wrap gap-2 p-4">
+      {prompts?.map((a, i) => (
+        <SubmitButton
+          key={i}
+          // className={buttonClassName}
+          onSubmit={async () => {
+            const rem = await plugin.focus.getFocusedRem();
+            if (rem?.text) {
+              const text = await plugin.richText.toString(rem.text);
+              await enableAI({
+                plugin,
+                rem,
+                prompt: a.prompt,
+                text,
+              });
+            }
+          }}
+        >
+          {a.name}
+        </SubmitButton>
+      ))}
       <QueryWord />
-      <DigestLongText />
-      <OptText />
-      <PromptGenerator />
       <SubmitButton
         onSubmit={async () => {
           const { newRem } = await replaceSelection({
