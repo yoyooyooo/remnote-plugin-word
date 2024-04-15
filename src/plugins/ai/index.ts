@@ -79,7 +79,7 @@ export const initAiPlugin = async ({ plugin }: { plugin: RNPlugin }) => {
       rem && (await plugin.window.openRem(rem));
     },
   });
-  await plugin.app.registerCommand({
+  /*  await plugin.app.registerCommand({
     id: 'view prompts in pane',
     name: 'view prompts in pane',
     action: async () => {
@@ -99,7 +99,7 @@ export const initAiPlugin = async ({ plugin }: { plugin: RNPlugin }) => {
       });
       // rem && (await plugin.window.getCurrentWindowTree());
     },
-  });
+  }); */
   await plugin.app.registerCommand({
     id: 'tag prompt',
     name: 'tag prompt',
@@ -153,7 +153,7 @@ export const initAiPlugin = async ({ plugin }: { plugin: RNPlugin }) => {
   await plugin.app.registerPowerup({
     name: AI_ENABLED_POWERUP_NAME,
     code: AI_ENABLED_POWERUP_CODE,
-    description: 'Mark a REM to indicate its being processed by AI',
+    description: 'Mark a rem to indicate its being processed by AI',
     options: {
       slots: [
         { code: aiSlots.prompt, name: aiSlots.prompt, hidden: true },
@@ -163,7 +163,7 @@ export const initAiPlugin = async ({ plugin }: { plugin: RNPlugin }) => {
           name: aiSlots.status,
           hidden: true,
           propertyType: PropertyType.MULTI_SELECT,
-          enumValues: { option: 'option', editingSelection: 'editingSelection' },
+          enumValues: { option: 'option', editingSelection: 'editingSelection', like: 'like' },
         },
         // {
         //   code: SLOT_IDs.height,

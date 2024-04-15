@@ -6,12 +6,15 @@ import {
   WidgetLocation,
 } from '@remnote/plugin-sdk';
 import { SubmitButton } from '../components/SubmitButton';
-import { AI_ENABLED_POWERUP_CODE, getEnabledPromptRows } from '../plugins/ai';
-import { DigestLongText } from '../components/ToolButtons/DigestLongText';
-import { OptText } from '../components/ToolButtons/OptText';
-import { PromptGenerator } from '../components/ToolButtons/PromptGenerator';
 import { QueryWord } from '../components/ToolButtons/QueryWord';
-import { getAiStatusRem, replaceSelection, enableAI } from '../plugins/ai';
+import {
+  AI_ACTION_POWERUP_CODE,
+  AI_ENABLED_POWERUP_CODE,
+  enableAI,
+  getAiStatusRem,
+  getEnabledPromptRows,
+  replaceSelection,
+} from '../plugins/ai';
 
 export const SampleWidget = () => {
   const plugin = usePlugin();
@@ -54,8 +57,7 @@ export const SampleWidget = () => {
           });
           newRem?.addPowerup(AI_ENABLED_POWERUP_CODE);
           const editingSelectionRem = await getAiStatusRem({ plugin, status: 'editingSelection' });
-          console.log({ editingSelectionRem });
-
+          newRem?.addPowerup(AI_ACTION_POWERUP_CODE);
           editingSelectionRem && newRem?.addTag(editingSelectionRem);
         }}
       >

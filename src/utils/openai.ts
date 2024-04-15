@@ -11,7 +11,7 @@ export async function queryAi({
   prompt,
   model,
   autoExtractCode,
-  debug = false,
+  debug = true,
 }: {
   prompt: string;
   model?: string;
@@ -21,7 +21,7 @@ export async function queryAi({
   console.log(`debug[queryAi] prompt: `, prompt);
   if (debug) {
     await delay(1000);
-    return [null, 'debug content'];
+    return [null, 'debug content' + Date.now()];
   }
   try {
     const response = await fetch('https://www.gptapi.us/v1/chat/completions', {

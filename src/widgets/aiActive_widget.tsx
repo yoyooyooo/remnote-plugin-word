@@ -14,6 +14,8 @@ import {
   enableAI,
   getEnabledPromptRows,
   prompt_optText,
+  getAiStatusRem,
+  AI_ACTION_POWERUP_CODE,
 } from '../plugins/ai';
 
 export const SampleWidget = () => {
@@ -99,6 +101,26 @@ export const SampleWidget = () => {
                   }`
                 : ''}
             </SubmitButton>
+
+            <SubmitButton
+              className={buttonClassName}
+              onSubmit={async () => {
+                const childRems = await widgetRem!.getChildrenRem();
+                const optionRem = (await getAiStatusRem({ plugin, status: 'option' }))!;
+                const likeRem = (await getAiStatusRem({ plugin, status: 'like' }))!;
+                childRems.forEach(async (a) => {
+                  const tags = await a.getTagRems();
+                  if (
+                    tags.some((a) => a._id === optionRem?._id) &&
+                    !tags.some((a) => a._id === likeRem._id)
+                  )
+                    a.remove();
+                });
+              }}
+            >
+              清空非标星
+            </SubmitButton>
+
             <div
               className="bg-blue-50 rounded-md inline-block py-1 px-2 text-sm text-bold text-white cursor-pointer"
               onClick={() => setShowPrompt((p) => !p)}

@@ -21,7 +21,7 @@ export const getAiStatusRem = async ({
   status,
 }: {
   plugin: RNPlugin;
-  status: 'option' | 'editingSelection';
+  status: 'option' | 'editingSelection' | 'like';
 }) => {
   const statusRem = await plugin.powerup.getPowerupSlotByCode(
     AI_ENABLED_POWERUP_CODE,
@@ -94,8 +94,8 @@ export const enableAI = async ({
   }
   const newRem = await plugin.rem.createRem();
   newRem?.addPowerup(AI_ACTION_POWERUP_CODE);
-  const editingRem = await getAiStatusRem({ plugin, status: 'option' });
-  editingRem && newRem?.addTag(editingRem);
+  const optionRem = await getAiStatusRem({ plugin, status: 'option' });
+  optionRem && newRem?.addTag(optionRem);
   newRem?.setText(await plugin.richText.parseFromMarkdown(res));
   // newRem?.setText([res]);
   newRem?.setParent(rem, -1);
