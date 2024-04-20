@@ -83,3 +83,69 @@ export const getRemChildrenText = async function (rem: Rem, plugin: RNPlugin) {
     (await rem?.getChildrenRem()).map(async (a) => await plugin.richText.toString(a.text!)) || []
   );
 };
+
+export const getRemText = async function ({
+  rem,
+  plugin,
+  includeSelf = true,
+  includeDescendants = true,
+}: {
+  rem: Rem;
+  plugin: RNPlugin;
+  includeSelf?: boolean;
+  includeDescendants?: boolean;
+}) {
+  return [
+    ...(includeSelf ? [await plugin.richText.toString(rem?.text || [])] : []),
+    ...(includeDescendants
+      ? [
+          (await Promise.all(
+            (await rem?.getDescendants())?.map((a) => plugin.richText.toString(a.text || [])) || []
+          )) || [],
+        ]
+      : []),
+  ];
+};
+
+// 整个rem由双链组成，获取string
+export const getRemTextOfAllReferences = async function (rem: Rem, plugin: RNPlugin) {
+  const remIds = await plugin.richText.getRemIdsFromRichText(rem.text || []);
+  return [
+    // text,
+    ...(await Promise.all(
+      remIds.flatMap(async (id) => {
+        const rem = await plugin.rem.findOne(id);
+        if (!rem) return [];
+        return await getRemText({ rem, plugin });
+      })
+    )),
+  ]
+    .filter((a) => !!a.length)
+    .join('\n');
+};
+
+// 获取包含自己以及子级的所有text, 暂时只考虑当前rem都有双链组成
+export const getRemTextIncludesReferences = async function ({
+  rem,
+  plugin,
+  includeSelf,
+  includeDescendants,
+}: {
+  rem: Rem;
+  plugin: RNPlugin;
+  includeSelf?: boolean;
+  includeDescendants?: boolean;
+}) {
+  const remIds = await plugin.richText.getRemIdsFromRichText(rem.text || []);
+  return [
+    ...(await Promise.all(
+      remIds.flatMap(async (id) => {
+        const rem = await plugin.rem.findOne(id);
+        if (!rem) return [];
+        return await getRemText({ rem, plugin, includeSelf, includeDescendants });
+      })
+    )),
+  ]
+    .filter((a) => !!a.length)
+    .join('\n');
+};

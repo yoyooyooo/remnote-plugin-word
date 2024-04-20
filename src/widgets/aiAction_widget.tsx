@@ -8,7 +8,12 @@ import {
   AppEvents,
   useTracker,
 } from '@remnote/plugin-sdk';
-import { AI_ACTION_POWERUP_CODE, AI_ENABLED_POWERUP_CODE, getAiStatusRem } from '../plugins/ai';
+import {
+  AI_ACTION_POWERUP_CODE,
+  AI_ENABLED_POWERUP_CODE,
+  getAiPromptSceneRem,
+  getAiStatusRem,
+} from '../plugins/ai';
 import { findAsync } from '../utils/common';
 
 export const SampleWidget = () => {
@@ -62,6 +67,8 @@ export const SampleWidget = () => {
           );
           const parentRem = (await widgetRem.getParentRem())!;
           parentRem.removePowerup(AI_ENABLED_POWERUP_CODE); // turn off ai
+          const selectedRem = await getAiPromptSceneRem({ plugin, scene: 'selectedRem' })!;
+          selectedRem && (await parentRem?.removeTag(selectedRem._id));
 
           // selection
           if (editingSelectionRem) {
