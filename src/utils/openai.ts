@@ -11,7 +11,7 @@ export async function queryAi({
   prompt,
   model,
   autoExtractCode,
-  debug = true,
+  debug = false,
 }: {
   prompt: string;
   model?: string;

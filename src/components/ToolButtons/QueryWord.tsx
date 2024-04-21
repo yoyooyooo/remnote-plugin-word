@@ -13,6 +13,7 @@ export const QueryWord = () => {
         const focusRem = await plugin.focus.getFocusedRem();
         const [err, res] = await queryAi({
           autoExtractCode: true,
+          model: 'gpt-4',
           prompt: `创建一张学习卡片帮助用户在RemNote等学习软件中记忆新单词。当用户查询一个英文单词时，按照以下格式提供信息：
 \`\`\`
 - 发音：[请提供美式发音的音标]
@@ -38,7 +39,7 @@ export const QueryWord = () => {
         });
         await generateMdToChildRems({
           plugin,
-          topRem: focusRem,
+          topRem: focusRem!,
           md: (!err && res) || '',
         });
       }}
