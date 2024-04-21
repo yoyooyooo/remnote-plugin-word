@@ -12,6 +12,7 @@ import {
   aiSlots,
   AI_ACTION_POWERUP_CODE,
   AI_PROMPT_POWERUP_CODE,
+  aiPromptSlots,
 } from './constants';
 import { completePrompt } from './prompts';
 import { queryAi } from '../../utils/openai';
@@ -29,6 +30,21 @@ export const getAiStatusRem = async ({
   );
 
   return (await statusRem?.getChildrenRem())?.find((a) => a.text?.[0] === status);
+};
+
+export const getAiPromptSceneRem = async ({
+  plugin,
+  scene,
+}: {
+  plugin: RNPlugin;
+  scene: 'selection' | 'rem' | 'selectedRem';
+}) => {
+  const statusRem = await plugin.powerup.getPowerupSlotByCode(
+    AI_PROMPT_POWERUP_CODE,
+    aiPromptSlots.scene
+  );
+
+  return (await statusRem?.getChildrenRem())?.find((a) => a.text?.[0] === scene);
 };
 
 /** 开始使用ai处理指定rem */
@@ -72,21 +88,28 @@ export const enableAI = async ({
   rem,
   plugin,
   text,
+  params: params0,
+  transformResponseText = (x) => x,
 }: {
   plugin: RNPlugin;
   rem?: Rem;
   prompt: string;
-  text: string;
+  text?: string;
+  params?: string | Record<string, any>;
+  transformResponseText?: (
+    text: RichTextInterface
+  ) => RichTextInterface | Promise<RichTextInterface>;
 }) => {
-  if (!rem) return;
-  rem.expand(rem._id, false); // TODO: 好像没效果
+  if (!rem || !text) return;
 
   tagEnableAI({
     rem,
     prompt: [prompt],
   });
+  const params = params0 || (await rem.getPowerupProperty(AI_ENABLED_POWERUP_CODE, aiSlots.params));
   const [err, res] = await queryAi({
     prompt: completePrompt(prompt, { text }),
+    params: params && (typeof params === 'string' ? JSON.parse(params) : params),
   });
   if (err) {
     plugin.app.toast('query ai error');
@@ -96,9 +119,10 @@ export const enableAI = async ({
   newRem?.addPowerup(AI_ACTION_POWERUP_CODE);
   const optionRem = await getAiStatusRem({ plugin, status: 'option' });
   optionRem && newRem?.addTag(optionRem);
-  newRem?.setText(await plugin.richText.parseFromMarkdown(res));
+  newRem?.setText(await transformResponseText(await plugin.richText.parseFromMarkdown(res)));
   // newRem?.setText([res]);
-  newRem?.setParent(rem, -1);
+  await newRem?.setParent(rem, -1);
+  rem.expand(rem._id, false);
 };
 
 export const getPromptRows = async (plugin: RNPlugin) => {

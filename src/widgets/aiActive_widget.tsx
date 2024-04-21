@@ -1,10 +1,4 @@
-import {
-  WidgetLocation,
-  renderWidget,
-  usePlugin,
-  useRunAsync,
-  useTracker,
-} from '@remnote/plugin-sdk';
+import { WidgetLocation, renderWidget, usePlugin, useTracker } from '@remnote/plugin-sdk';
 import React from 'react';
 import { SubmitButton } from '../components/SubmitButton';
 import {
@@ -12,17 +6,19 @@ import {
   PROMPT,
   aiSlots,
   enableAI,
-  getEnabledPromptRows,
-  prompt_optText,
   getAiStatusRem,
-  AI_ACTION_POWERUP_CODE,
+  getAiPromptSceneRem,
+  getEnabledPromptRows,
 } from '../plugins/ai';
+import { ToneSetting } from '../plugins/ai/ToneSetting';
+import { extractPost } from '../utils/extractPost';
+import { getRemTextIncludesReferences } from '../utils/rem';
 
 export const SampleWidget = () => {
   const plugin = usePlugin();
   const [showPrompt, setShowPrompt] = React.useState(false);
   const [prompt, setPrompt] = React.useState('');
-  const [tab, setTab] = React.useState<'action' | 'buildIn'>('action');
+  const [tab, setTab] = React.useState<'action' | 'buildIn' | 'tone'>('action');
 
   const widgetContext = useTracker(
     (plugin) => plugin.widget.getWidgetContext<WidgetLocation.UnderRemEditor>(),
@@ -38,7 +34,6 @@ export const SampleWidget = () => {
     },
     [widgetRem]
   );
-  console.log({ _prompt, prompt });
 
   const prompts = useTracker(async (plugin) => {
     return await getEnabledPromptRows(plugin);
@@ -48,9 +43,27 @@ export const SampleWidget = () => {
     _prompt && setPrompt(_prompt);
   }, [_prompt]);
 
-  console.log({ _prompt, prompt });
-
   const buttonClassName = `bg-blue-50 rounded-md inline-block py-1 px-2 text-sm text-bold text-white cursor-pointer w-max`;
+
+  // 提供的文案，如果是已选择多个rem，需要把当前rem里的双链包含子级都拿出来拼一起
+  const getText = async () => {
+    const rem = (await plugin.rem.findOne(widgetContext?.remId))!;
+    const selectedRemRem = await getAiPromptSceneRem({
+      plugin,
+      scene: 'selectedRem',
+    });
+    const tags = await rem.getTagRems();
+    if (tags.some((a) => a._id === selectedRemRem?._id)) {
+      // plugin.richText.toString()
+      // 选择多个rem
+      return await getRemTextIncludesReferences({ rem, plugin, includeDescendants: false });
+    } else {
+      // 单个rem（当前rem）
+      if (rem.text) {
+        return await plugin.richText.toString(rem.text);
+      }
+    }
+  };
 
   return (
     <div className="bg-pink-10 rounded-md px-5 py-2 flex flex-wrap gap-2">
@@ -72,35 +85,36 @@ export const SampleWidget = () => {
           >
             内置prompt
           </button>
+          <button
+            className={`text-sm px-4 h-[26px] ${
+              tab === 'tone' ? 'font-semibold text-black' : 'font-light text-gray-30'
+            }`}
+            onClick={() => setTab('tone')}
+          >
+            语气
+          </button>
         </div>
       </div>
 
       <div className="w-full flex flex-wrap gap-2">
         {tab === 'action' && (
           <>
-            <SubmitButton
-              className={buttonClassName}
-              onSubmit={async () => {
-                const rem = (await plugin.rem.findOne(widgetContext?.remId))!;
-                if (rem.text) {
-                  const text = await plugin.richText.toString(rem.text);
-                  await enableAI({
-                    plugin,
-                    rem,
-                    prompt,
-                    text,
-                  });
-                }
-              }}
-            >
-              重新执行
-              {prompt
-                ? `${
-                    // @ts-ignore
-                    PROMPT[prompt] ? `: ${PROMPT[prompt]}` : ''
-                  }`
-                : ''}
-            </SubmitButton>
+            {prompt && (
+              <SubmitButton
+                className={buttonClassName}
+                onSubmit={async () => {
+                  await enableAI({ plugin, rem: widgetRem, prompt, text: await getText() });
+                }}
+              >
+                重新执行
+                {prompt
+                  ? `${
+                      // @ts-ignore
+                      PROMPT[prompt] ? `: ${PROMPT[prompt]}` : ': 自定义prompt'
+                    }`
+                  : ''}
+              </SubmitButton>
+            )}
 
             <SubmitButton
               className={buttonClassName}
@@ -158,22 +172,36 @@ export const SampleWidget = () => {
               key={i}
               className={buttonClassName}
               onSubmit={async () => {
-                const rem = (await plugin.rem.findOne(widgetContext?.remId))!;
-                if (rem.text) {
-                  const text = await plugin.richText.toString(rem.text);
-                  await enableAI({
-                    plugin,
-                    rem,
-                    prompt: a.prompt,
-                    text,
-                  });
-                }
+                await enableAI({ plugin, rem: widgetRem, prompt: a.prompt, text: await getText() });
               }}
             >
               {a.name}
             </SubmitButton>
           ))}
+
+        {tab === 'tone' && <ToneSetting rem={widgetRem} />}
       </div>
+
+      <SubmitButton
+        onSubmit={async () => {
+          const res = await extractPost(`https://mp.weixin.qq.com/s/560AjX2-92nnKXQcupzFfA`);
+          console.log(1213, res);
+          // const rem = (await plugin.rem.createRem())!;
+          // rem.setText(await plugin.richText.parseFromMarkdown(res));
+          // widgetRem && rem.setParent(widgetRem);
+          // rem.setText();
+          const rems = await plugin.rem.createTreeWithMarkdown(res);
+          console.log({ rems });
+
+          if (widgetRem) {
+            for (const r of rems) {
+              await r.setParent(widgetRem);
+            }
+          }
+        }}
+      >
+        extractPost
+      </SubmitButton>
     </div>
   );
 };

@@ -10,7 +10,9 @@ import {
   aiSlots,
 } from './constants';
 import { buildinPrompts } from './prompts';
-import { getPromptRows } from './utils';
+import { getPromptRows, getAiPromptSceneRem } from './utils';
+import { toneMap } from '../../utils/openai';
+import { getRemTextIncludesReferences, getRemText } from '../../utils/rem';
 
 export * from './constants';
 export * from './prompts';
@@ -21,8 +23,48 @@ export const initAiPlugin = async ({ plugin }: { plugin: RNPlugin }) => {
     id: 'ai on',
     name: 'ai on',
     action: async () => {
-      const rem = await plugin.focus.getFocusedRem();
-      await rem?.addPowerup(AI_ENABLED_POWERUP_CODE);
+      const focusedRem = await plugin.focus.getFocusedRem();
+      if (focusedRem) {
+        await focusedRem.addPowerup(AI_ENABLED_POWERUP_CODE);
+      } else {
+        const selectedRem = await plugin.editor.getSelectedRem();
+        if (selectedRem) {
+          const selectIds = selectedRem.remIds;
+          const parentRem = await (await plugin.rem.findOne(selectIds[0]))?.getParentRem();
+          const pChildren = await parentRem?.getChildrenRem();
+          // 当选选中的rem处于父级的第index个位置
+          const lastIndex =
+            pChildren?.findIndex((a) => a._id === selectIds[selectIds.length - 1]) || -1;
+
+          if (lastIndex > -1 && parentRem) {
+            const rem = await plugin.rem.createRem();
+            const textIncludeDecendants = (
+              await Promise.all(
+                selectIds.flatMap(async (_id) => {
+                  return [
+                    { i: 'q', _id },
+                    ...((await (await plugin.rem.findOne(_id))?.getDescendants())?.map(
+                      (a) =>
+                        ({
+                          i: 'q',
+                          _id: a._id,
+                        } as any)
+                    ) || []),
+                  ];
+                })
+              )
+            ).flat();
+            await rem?.setText(textIncludeDecendants);
+            await rem?.setParent(parentRem, lastIndex + 1);
+            await rem?.addPowerup(AI_ENABLED_POWERUP_CODE);
+            const selectedRemRem = await getAiPromptSceneRem({
+              plugin,
+              scene: 'selectedRem',
+            });
+            selectedRemRem && (await rem?.addTag(selectedRemRem));
+          }
+        }
+      }
     },
   });
 
@@ -32,6 +74,29 @@ export const initAiPlugin = async ({ plugin }: { plugin: RNPlugin }) => {
       name: 'Debug focused rem',
       action: async () => {
         const focusedRem = await plugin.focus.getFocusedRem();
+        if (focusedRem) {
+          const res = await plugin.richText.toString(focusedRem.text || []);
+          const remIds = await plugin.richText.getRemIdsFromRichText(focusedRem.text || []);
+
+
+          const pChildren = (await focusedRem.getParentRem())?.getChildrenRem();
+          console.log('debug pChildren,focusedRem存在', pChildren);
+        }
+        // const xx = await plugin.editor.();
+        const selectedRem = await plugin.editor.getSelectedRem();
+        console.log({ selectedRem });
+
+        if (selectedRem) {
+          const selectIds = selectedRem.remIds;
+          const parentRem = await (await plugin.rem.findOne(selectIds[0]))?.getParentRem();
+          const pChildren = await parentRem?.getChildrenRem();
+          // 当选选中的rem处于父级的第index个位置
+          const lastIndex =
+            pChildren?.findIndex((a) => a._id === selectIds[selectIds.length - 1]) || -1;
+
+          console.log('debug,selectedRem存在', { pChildren, selectIds, lastIndex });
+        }
+
         const tags = await focusedRem?.getTagRems();
 
         const enabledRem = await plugin.powerup.getPowerupSlotByCode(
@@ -42,9 +107,12 @@ export const initAiPlugin = async ({ plugin }: { plugin: RNPlugin }) => {
         console.log('debug rem', {
           focusedRem,
           tags,
+          tagsText: await Promise.all(
+            tags?.map((a) => plugin.richText.toString(a.text || [])) || []
+          ),
           children: await focusedRem?.getChildrenRem(),
           enabledRem,
-          xxx: await enabledRem?.getChildrenRem(),
+          selectedRem,
         });
       },
     });
@@ -159,6 +227,21 @@ export const initAiPlugin = async ({ plugin }: { plugin: RNPlugin }) => {
         { code: aiSlots.prompt, name: aiSlots.prompt, hidden: true },
         { code: aiSlots.data, name: aiSlots.data, hidden: true },
         {
+          code: 'tone',
+          name: 'tone',
+          hidden: true,
+          propertyType: PropertyType.SINGLE_SELECT,
+          enumValues: {
+            no: 'no',
+            professional: 'professional',
+            casual: 'casual',
+            friendly: 'friendly',
+            confident: 'confident',
+            direct: 'direct',
+          },
+        },
+        { code: 'params', name: 'params', hidden: true },
+        {
           code: aiSlots.status,
           name: aiSlots.status,
           hidden: true,
@@ -195,7 +278,11 @@ export const initAiPlugin = async ({ plugin }: { plugin: RNPlugin }) => {
           code: 'scene',
           name: 'scene',
           propertyType: PropertyType.MULTI_SELECT,
-          enumValues: { selection: 'selection', rem: 'rem' },
+          enumValues: {
+            selection: 'selection',
+            rem: 'rem',
+            selectedRem: 'selectedRem', // 选择多个rem后激活ai
+          },
         },
         { code: 'order', name: 'order', propertyType: PropertyType.NUMBER },
       ],

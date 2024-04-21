@@ -7,18 +7,54 @@ const delay = (ms: number) =>
     }, ms)
   );
 
+export const toneMap = {
+  professional: {
+    temperature: 0.4,
+    top_p: 0.5,
+    frequency_penalty: 0.3,
+    presence_penalty: 0.0,
+  },
+  casual: {
+    temperature: 0.9,
+    top_p: 0.9,
+    frequency_penalty: 0.1,
+    presence_penalty: 0.0,
+  },
+  friendly: {
+    temperature: 0.7,
+    top_p: 0.8,
+    frequency_penalty: 0.1,
+    presence_penalty: 0.0,
+  },
+  confident: {
+    temperature: 0.6,
+    top_p: 0.7,
+    frequency_penalty: 0.4,
+    presence_penalty: 0.0,
+  },
+  direct: {
+    temperature: 0.5,
+    top_p: 0.6,
+    frequency_penalty: 0.5,
+    presence_penalty: 0.0,
+  },
+};
+
 export async function queryAi({
   prompt,
+  params,
   model,
   autoExtractCode,
   debug = false,
 }: {
+  params?: Record<string, any>;
   prompt: string;
   model?: string;
   autoExtractCode?: boolean;
   debug?: boolean;
 }): Promise<[any, string]> {
   console.log(`debug[queryAi] prompt: `, prompt);
+  console.log(`debug[queryAi] params: `, params);
   if (debug) {
     await delay(1000);
     return [null, 'debug content' + Date.now()];
@@ -42,8 +78,11 @@ export async function queryAi({
             ].join('\n'),
           },
         ],
+        ...params,
         // max_tokens: 150,
-        // temperature: 0.7,
+        // temperature: 0.7, // 随机性: 数值越高，生成的文本越随机
+        // top_p: 介于0到1之间，这是一个概率阈值，模型在生成每个token时会只考虑累计概率高于这个阈值的最可能的token。
+        // frequency_penalty 和 presence_penalty: 这些参数用于调整输出中的词频和多样性。数值越高，模型越倾向于避免重复和引入更多新颖的内容。
       }),
     });
 
