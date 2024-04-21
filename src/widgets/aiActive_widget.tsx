@@ -12,7 +12,9 @@ import {
 } from '../plugins/ai';
 import { ToneSetting } from '../plugins/ai/ToneSetting';
 import { extractPost } from '../utils/extractPost';
-import { getRemTextIncludesReferences } from '../utils/rem';
+import { getRemTextIncludesReferences, generateMdToChildRems } from '../utils/rem';
+import { queryAi } from '../utils/openai';
+import { prompt_digestLongText, prompt_optText } from '../plugins/ai/prompts';
 
 export const SampleWidget = () => {
   const plugin = usePlugin();
@@ -184,20 +186,29 @@ export const SampleWidget = () => {
 
       <SubmitButton
         onSubmit={async () => {
-          const res = await extractPost(`https://mp.weixin.qq.com/s/560AjX2-92nnKXQcupzFfA`);
-          console.log(1213, res);
+          const postContent = await extractPost(`https://juejin.cn/post/7344290391988502538`);
+          console.log(1213, postContent);
           // const rem = (await plugin.rem.createRem())!;
           // rem.setText(await plugin.richText.parseFromMarkdown(res));
           // widgetRem && rem.setParent(widgetRem);
-          // rem.setText();
-          const rems = await plugin.rem.createTreeWithMarkdown(res);
-          console.log({ rems });
 
-          if (widgetRem) {
-            for (const r of rems) {
-              await r.setParent(widgetRem);
-            }
-          }
+          // const rems = await plugin.rem.createTreeWithMarkdown(res);
+          // console.log({ rems });
+          // if (widgetRem) {
+          //   await plugin.rem.moveRems(rems, widgetRem, 999);
+          // }
+
+          const focusRem = await plugin.focus.getFocusedRem();
+          const [err, res] = await queryAi({
+            autoExtractCode: true,
+            prompt: prompt_optText.replace('{text}', postContent + '。补充：使用中文回答'),
+            model: 'gpt-3.5-turbo-16k',
+          });
+          await generateMdToChildRems({
+            plugin,
+            topRem: widgetRem!,
+            md: (!err && res) || '',
+          });
         }}
       >
         extractPost

@@ -45,7 +45,7 @@ export async function queryAi({
   params,
   model,
   autoExtractCode,
-  debug = true,
+  debug = false,
 }: {
   params?: Record<string, any>;
   prompt: string;

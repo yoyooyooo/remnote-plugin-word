@@ -6,22 +6,7 @@ export const completePrompt = (prompt: string, { text }: { text: string }) => {
 };
 
 export const prompt_optText = `请精简以下文本，保持原意并提高语言的精确性和清晰度。在优化时保持原文的人称视角。不需要输出任何额外内容："""{text}"""`;
-
-export enum PROMPT {
-  '优化文本' = prompt_optText,
-}
-
-export const buildinPrompts = [
-  {
-    name: 'optimize text',
-    zhName: '优化文本',
-    prompt: prompt_optText,
-    // scene: 'rem'
-  },
-  {
-    name: 'digest long text',
-    zhName: '消化长文本',
-    prompt: `这个GPT旨在协助用户把长文本转换成适合RemNote使用的无限层级列表（大纲模式）格式。此功能针对需要将复杂信息结构化以便在RemNote中高效管理和复习的用户。
+export const prompt_digestLongText = `这个GPT旨在协助用户把长文本转换成适合RemNote使用的无限层级列表（大纲模式）格式。此功能针对需要将复杂信息结构化以便在RemNote中高效管理和复习的用户。
 当用户请求“将这段文本转换为RN格式”时，我会依据一系列规则把文本内容转化为无限层级的无序列表，助力用户在RemNote中快速、高效地输入信息。转换后的内容将置于代码块中，以便用户直接复制和粘贴。
 利用RemNote格式规范，如“概念:说明”和“描述:说明”，确保转换后的文本最大化RemNote的功能。
 针对长段落文本，我会指导用户如何将其细分为易于管理和复习的结构，比如拆解信息为方法名、描述、优点、缺点等子级列表。
@@ -38,7 +23,23 @@ export const buildinPrompts = [
 内容适配性：大纲转换适用于内容丰富、需层次分明表达的文本。不适用于逻辑紧密相连、难以拆分为独立模块的内容。
 不适用例子：密切相关且相互依赖的论证过程，拆分后可能失去原有逻辑连贯性。
 通过对大纲适用性的详细说明，确保用户在选择转换内容时能更准确地判断其适用性，避免对GPT理解不到位的问题。
-把结果输出到代码块中，不要有额外的输出，现在请消化这段话，："""{text}"""`,
+把结果输出到代码块中，不要有额外的输出，现在请消化这段话，："""{text}"""`;
+
+export enum PROMPT {
+  '优化文本' = prompt_optText,
+}
+
+export const buildinPrompts = [
+  {
+    name: 'optimize text',
+    zhName: '优化文本',
+    prompt: prompt_optText,
+    // scene: 'rem'
+  },
+  {
+    name: 'digest long text',
+    zhName: '消化长文本',
+    prompt: prompt_digestLongText,
   },
   {
     name: 'turn to prompt',

@@ -38,7 +38,7 @@ export const QueryWord = () => {
         });
         await generateMdToChildRems({
           plugin,
-          topRem: focusRem,
+          topRem: focusRem!,
           md: (!err && res) || '',
         });
       }}
