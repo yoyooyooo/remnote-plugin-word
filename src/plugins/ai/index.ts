@@ -78,7 +78,6 @@ export const initAiPlugin = async ({ plugin }: { plugin: RNPlugin }) => {
           const res = await plugin.richText.toString(focusedRem.text || []);
           const remIds = await plugin.richText.getRemIdsFromRichText(focusedRem.text || []);
 
-
           const pChildren = (await focusedRem.getParentRem())?.getChildrenRem();
           console.log('debug pChildren,focusedRem存在', pChildren);
         }
@@ -274,6 +273,12 @@ export const initAiPlugin = async ({ plugin }: { plugin: RNPlugin }) => {
         { code: 'zhName', name: 'zhName' },
         { code: 'prompt', name: 'prompt' },
         { code: 'enabled', name: 'enabled', propertyType: PropertyType.CHECKBOX },
+        { code: 'autoExtractCode', name: 'autoExtractCode', propertyType: PropertyType.CHECKBOX },
+        {
+          code: 'transformToRemTree',
+          name: 'transformToRemTree',
+          propertyType: PropertyType.CHECKBOX,
+        },
         {
           code: 'scene',
           name: 'scene',

@@ -16,6 +16,7 @@ import {
 } from './constants';
 import { completePrompt } from './prompts';
 import { queryAi } from '../../utils/openai';
+import { generateMdToChildRems } from '../../utils/rem';
 
 export const getAiStatusRem = async ({
   plugin,
@@ -90,11 +91,15 @@ export const enableAI = async ({
   text,
   params: params0,
   transformResponseText = (x) => x,
+  autoExtractCode,
+  transformToRemTree,
 }: {
   plugin: RNPlugin;
   rem?: Rem;
   prompt: string;
   text?: string;
+  autoExtractCode?: boolean;
+  transformToRemTree?: boolean;
   params?: string | Record<string, any>;
   transformResponseText?: (
     text: RichTextInterface
@@ -110,18 +115,27 @@ export const enableAI = async ({
   const [err, res] = await queryAi({
     prompt: completePrompt(prompt, { text }),
     params: params && (typeof params === 'string' ? JSON.parse(params) : params),
+    autoExtractCode,
   });
   if (err) {
     plugin.app.toast('query ai error');
     return;
   }
-  const newRem = await plugin.rem.createRem();
-  newRem?.addPowerup(AI_ACTION_POWERUP_CODE);
-  const optionRem = await getAiStatusRem({ plugin, status: 'option' });
-  optionRem && newRem?.addTag(optionRem);
-  newRem?.setText(await transformResponseText(await plugin.richText.parseFromMarkdown(res)));
-  // newRem?.setText([res]);
-  await newRem?.setParent(rem, -1);
+  if (transformToRemTree) {
+    await generateMdToChildRems({
+      plugin,
+      topRem: rem,
+      md: (!err && res) || '',
+    });
+  } else {
+    const newRem = await plugin.rem.createRem();
+    newRem?.addPowerup(AI_ACTION_POWERUP_CODE);
+    const optionRem = await getAiStatusRem({ plugin, status: 'option' });
+    optionRem && newRem?.addTag(optionRem);
+    newRem?.setText(await transformResponseText(await plugin.richText.parseFromMarkdown(res)));
+    // newRem?.setText([res]);
+    await newRem?.setParent(rem, -1);
+  }
   rem.expand(rem._id, false);
 };
 
@@ -134,6 +148,8 @@ export const getPromptRows = async (plugin: RNPlugin) => {
       scene: await a.getPowerupProperty(AI_PROMPT_POWERUP_CODE, 'scene'),
       prompt: await a.getPowerupProperty(AI_PROMPT_POWERUP_CODE, 'prompt'),
       enabled: await a.getPowerupProperty(AI_PROMPT_POWERUP_CODE, 'enabled'),
+      autoExtractCode: await a.getPowerupProperty(AI_PROMPT_POWERUP_CODE, 'autoExtractCode'),
+      transformToRemTree: await a.getPowerupProperty(AI_PROMPT_POWERUP_CODE, 'transformToRemTree'),
       order: +(await a.getPowerupProperty(AI_PROMPT_POWERUP_CODE, 'order')) || 0,
     }))
   );

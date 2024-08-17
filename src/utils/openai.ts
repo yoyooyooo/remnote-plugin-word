@@ -55,6 +55,7 @@ export async function queryAi({
 }): Promise<[any, string]> {
   console.log(`debug[queryAi] prompt: `, prompt);
   console.log(`debug[queryAi] params: `, params);
+  console.log(`debug[queryAi] autoExtractCode: `, autoExtractCode);
   if (debug) {
     await delay(1000);
     return [null, 'debug content' + Date.now()];
@@ -64,10 +65,10 @@ export async function queryAi({
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer sk-Z1CB6EbbpMLMuK0O9a237e5b8e9945D8A77fDcEa8bC3199e`,
+        Authorization: ``,
       },
       body: JSON.stringify({
-        model: model || 'gpt-3.5-turbo',
+        model: 'gpt-4o-mini',
         messages: [
           {
             role: 'user',
@@ -78,11 +79,6 @@ export async function queryAi({
             ].join('\n'),
           },
         ],
-        ...params,
-        // max_tokens: 150,
-        // temperature: 0.7, // 随机性: 数值越高，生成的文本越随机
-        // top_p: 介于0到1之间，这是一个概率阈值，模型在生成每个token时会只考虑累计概率高于这个阈值的最可能的token。
-        // frequency_penalty 和 presence_penalty: 这些参数用于调整输出中的词频和多样性。数值越高，模型越倾向于避免重复和引入更多新颖的内容。
       }),
     });
 

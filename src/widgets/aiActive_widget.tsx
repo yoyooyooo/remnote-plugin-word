@@ -37,13 +37,13 @@ export const SampleWidget = () => {
     [widgetRem]
   );
 
-  const prompts = useTracker(async (plugin) => {
-    return await getEnabledPromptRows(plugin);
-  }, []);
-
   React.useEffect(() => {
     _prompt && setPrompt(_prompt);
   }, [_prompt]);
+
+  const prompts = useTracker(async (plugin) => {
+    return await getEnabledPromptRows(plugin);
+  }, []);
 
   const buttonClassName = `bg-blue-50 rounded-md inline-block py-1 px-2 text-sm text-bold text-white cursor-pointer w-max`;
 
@@ -174,7 +174,15 @@ export const SampleWidget = () => {
               key={i}
               className={buttonClassName}
               onSubmit={async () => {
-                await enableAI({ plugin, rem: widgetRem, prompt: a.prompt, text: await getText() });
+                console.log(a);
+                await enableAI({
+                  plugin,
+                  rem: widgetRem,
+                  prompt: a.prompt,
+                  autoExtractCode: a.autoExtractCode === 'Yes',
+                  transformToRemTree: a.transformToRemTree === 'Yes',
+                  text: await getText(),
+                });
               }}
             >
               {a.name}

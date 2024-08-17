@@ -40,6 +40,8 @@ export const SampleWidget = () => {
                 plugin,
                 rem,
                 prompt: a.prompt,
+                autoExtractCode: a.autoExtractCode === 'Yes',
+                transformToRemTree: a.transformToRemTree === 'Yes',
                 text,
               });
             }

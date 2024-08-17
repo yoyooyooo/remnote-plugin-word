@@ -22,6 +22,8 @@ export const aiPromptSlots = {
   zhName: 'zhName',
   prompt: 'prompt',
   enabled: 'enabled',
+  autoExtractCode: 'autoExtractCode', // 是否自动从代码块中提取内容
+  transformToRemTree: 'transformToRemTree', // 是否把输出结果转化为rem tree（使用generateMdToChildRems输出）
   scene: 'scene',
   order: 'order',
 };
